@@ -1,2 +1,11 @@
-# double_pendulum
-D O U B L E P E N D U L U M
+# Double Pendulum
+
+Just trying to make a double pendulum using https://github.com/markfarnan/go-canvas
+to draw
+
+## Build
+`cd src`
+`env GOOS=js GOARCH=wasm go build -o main.wasm`
+`caddy`
+
+WIP
