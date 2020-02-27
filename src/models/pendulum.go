@@ -18,27 +18,35 @@ func (p *Pendulum) SetVelocity(x, y float64) {
 }
 
 type DoublePendulum struct {
-	pendulum1 *Pendulum
-	pendulum2 *Pendulum
+	pendulum1       *Pendulum
+	pendulum2       *Pendulum
+	potentialOffset float64
 
 	gravity float64
 	originX float64
 	originY float64
 }
 
-func (dp *DoublePendulum) getEnergy() (float64, float64, float64) {
-		var (
-			L1 = dp.pendulum1.length
-	   L2 = dp.pendulum2.length
-	   ke = this.bob1_.getKineticEnergy() + this.bob2_.getKineticEnergy();
-	  // lowest point that bob1 can be is -L1, define that as zero potential energy
-	  // lowest point that bob2 can be is -L1 -L2
-	   y1 = this.bob1_.getPosition().getY();
-	   y2 = this.bob2_.getPosition().getY();
-	   pe = this.gravity_ * this.bob1_.getMass()*(y1 - -L1)
-			 + this.gravity_ * this.bob2_.getMass()*(y2 - (-L1 -L2));
-		)
-	  return new EnergyInfo(pe + this.potentialOffset_, ke);
+func (dp *DoublePendulum) getEnergy() (float64, float64) {
+	var (
+		L1 = dp.pendulum1.length
+		L2 = dp.pendulum2.length
+		ke = dp.pendulum1.ball.GetKineticEnergy() + dp.pendulum2.ball.GetKineticEnergy()
+		// lowest point that bob1 can be is -L1, define that as zero potential energy
+		// lowest point that bob2 can be is -L1 -L2
+		y1 = dp.pendulum1.ball.locationY
+		y2 = dp.pendulum2.ball.locationY
+
+		pe = dp.gravity*dp.pendulum1.ball.mass*(y1+L1) +
+			dp.gravity*dp.pendulum2.ball.mass*(y2+L1+L2))
+	)
+	return pe + dp.potentialOffset, ke
+}
+
+func (dp *DoublePendulum) SetPotentialEnergy(val float64) {
+	dp.potentialOffset = 0
+	pe, _ := dp.getEnergy()
+	dp.potentialOffset = val - pe
 }
 
 func (dp *DoublePendulum) evaluate() {
