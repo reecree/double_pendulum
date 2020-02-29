@@ -132,7 +132,7 @@ func (dp *DoublePendulum) move() {
 	dp.pendulum2.SetVelocity(v2x, v2y)
 }
 
-func NewDP(x1, y1 float64) *DoublePendulum {
+func NewDP(x, y float64) *DoublePendulum {
 	dp := DoublePendulum{
 		pendulum1: &Pendulum{
 			length: 1,
@@ -141,13 +141,13 @@ func NewDP(x1, y1 float64) *DoublePendulum {
 		},
 		pendulum2: &Pendulum{
 			length: 1,
-			theta:  math.Pi / 8,
+			theta:  0,
 			ball:   PointMass{},
 		},
 		gravity: 9.8,
 	}
-	dp.pendulum1.SetPosition(x1, y1)
-	dp.pendulum2.SetPosition(x1, y1-1)
+	dp.pendulum1.SetPosition(x, y)
+	dp.pendulum2.SetPosition(x, y-1)
 
 	return nil
 }
