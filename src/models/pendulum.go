@@ -38,7 +38,7 @@ func (dp *DoublePendulum) getEnergy() (float64, float64) {
 		y2 = dp.pendulum2.ball.locationY
 
 		pe = dp.gravity*dp.pendulum1.ball.mass*(y1+L1) +
-			dp.gravity*dp.pendulum2.ball.mass*(y2+L1+L2))
+			dp.gravity*dp.pendulum2.ball.mass*(y2+L1+L2)
 	)
 	return pe + dp.potentialOffset, ke
 }
@@ -77,6 +77,34 @@ func (dp *DoublePendulum) evaluate() {
 	dp.pendulum2.ball.acceleration = num
 }
 
+func (dp *DoublePendulum) modify() {
+	// limit the pendulum angle to +/- Pi
+	theta1 := limitAngle(dp.pendulum1.theta)
+	if theta1 != dp.pendulum1.theta {
+		dp.pendulum1.theta = theta1
+		//this.getVarsList().setValue(0, theta1, /*continuous=*/false);
+		//vars[0] = theta1;
+	}
+	theta2 := limitAngle(dp.pendulum2.theta)
+	if theta2 != dp.pendulum2.theta {
+		dp.pendulum2.theta = theta2
+		//this.getVarsList().setValue(0, theta2, /*continuous=*/false);
+		//vars[0] = theta2;
+	}
+	// update the variables that track energy
+	//   0        1       2        3        4      5      6   7   8    9
+	// theta1, theta1', theta2, theta2', accel1, accel2, KE, PE, TE, time
+	dp.move()
+	dp.evaluate()
+	//dp.getEnergy()
+	//var ei = this.getEnergyInfo_(vars);
+	//   dp.
+	//   vars[6] = ei.getTranslational();
+	//   vars[7] = ei.getPotential();
+	//   vars[8] = ei.getTotalEnergy();
+	//   va.setValues(vars, /*continuous=*/true);
+}
+
 func (dp *DoublePendulum) move() {
 	var (
 		sinTheta1 = math.Sin(dp.pendulum1.theta)
@@ -104,6 +132,33 @@ func (dp *DoublePendulum) move() {
 	dp.pendulum2.SetVelocity(v2x, v2y)
 }
 
-func NewDP(x1, y1, x2, y2 float64) *DoublePendulum {
+func NewDP(x1, y1 float64) *DoublePendulum {
+	dp := DoublePendulum{
+		pendulum1: &Pendulum{
+			length: 1,
+			theta:  math.Pi / 4,
+			ball:   PointMass{},
+		},
+		pendulum2: &Pendulum{
+			length: 1,
+			theta:  math.Pi / 8,
+			ball:   PointMass{},
+		},
+		gravity: 9.8,
+	}
+	dp.pendulum1.SetPosition(x1, y1)
+	dp.pendulum2.SetPosition(x1, y1-1)
+
 	return nil
+}
+
+func limitAngle(angle float64) float64 {
+	if angle > math.Pi {
+		n := math.Floor((angle - -math.Pi) / (2 * math.Pi))
+		return angle - 2*math.Pi*n
+	} else if angle < -math.Pi {
+		n := math.Floor(-(angle - math.Pi) / (2 * math.Pi))
+		return angle + 2*math.Pi*n
+	}
+	return angle
 }
