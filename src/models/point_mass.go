@@ -1,6 +1,9 @@
 package models
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
 type PointMass struct {
 	locationX    float64
@@ -13,6 +16,11 @@ type PointMass struct {
 	direction    float64
 }
 
+func (p *PointMass) String() string {
+	return fmt.Sprintf("x: %f, y: %f, vx: %f, vy: %f accell: %f, direction: %f",
+		p.locationX, p.locationY, p.velocityX, p.velocityY, p.acceleration, p.direction)
+}
+
 func (p *PointMass) SetPosition(x, y float64) {
 	p.locationX = x
 	p.locationY = y
@@ -21,6 +29,10 @@ func (p *PointMass) SetPosition(x, y float64) {
 func (p *PointMass) SetVelocity(x, y float64) {
 	p.velocityX = x
 	p.velocityY = y
+}
+
+func (p *PointMass) GetLocation() (float64, float64) {
+	return p.locationX, p.locationY
 }
 
 func (p *PointMass) GetLength() float64 {
@@ -45,5 +57,6 @@ func (p *PointMass) GetRotationalEnergy() float64 {
 }
 
 func (p *PointMass) GetMomentAboutCM() float64 {
+	fmt.Println("moment")
 	return p.mass * p.moment
 }

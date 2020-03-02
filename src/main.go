@@ -19,23 +19,28 @@ import (
 	"syscall/js"
 	"time"
 
+	"github.com/reecree/double_pendulum/models"
+
 	"github.com/llgcode/draw2d/draw2dimg"
 	"github.com/llgcode/draw2d/draw2dkit"
 	"github.com/markfarnan/go-canvas/canvas"
-	"github.com/reecree/double_pendulum/src/pendulum"
 )
 
 type gameState struct {
-	dp pendulum.DoublePendulum
+	dp *models.DoublePendulum
 }
 
-var done chan struct{}
+var (
+	done chan struct{}
 
-var cvs *canvas.Canvas2d
-var width float64
-var height float64
+	cvs    *canvas.Canvas2d
+	width  float64
+	height float64
+)
 
-var gs = gameState{pendulum.DoublePendulum{}}
+const ballSize = 20
+
+var gs = gameState{}
 
 // This specifies how long a delay between calls to 'render'.     To get Frame Rate,   1s / renderDelay
 var renderDelay time.Duration = 30 * time.Millisecond
@@ -72,6 +77,9 @@ func doEvery(d time.Duration, f func(time.Time)) {
 // It may also be called seperatly from a 'doEvery' function, if the user
 // prefers drawing to be seperate from the annimationFrame callback
 func Render(gc *draw2dimg.GraphicContext) bool {
+	if gs.dp == nil {
+		gs.dp = models.NewDP(1, 0)
+	}
 
 	// if gs.laserX+gs.directionX > width-gs.laserSize || gs.laserX+gs.directionX < gs.laserSize {
 	// 	gs.directionX = -gs.directionX
@@ -80,21 +88,36 @@ func Render(gc *draw2dimg.GraphicContext) bool {
 	// 	gs.directionY = -gs.directionY
 	// }
 
-	// gc.SetFillColor(color.RGBA{0xff, 0xff, 0xff, 0xff})
-	// gc.Clear()
+	gc.SetFillColor(color.RGBA{0xff, 0xff, 0xff, 0xff})
+	gc.Clear()
 	// move red laser
-	gs.laserX += gs.directionX
-	gs.laserY += gs.directionY
+
+	gs.dp.Modify()
+	// gs.laserX += gs.directionX
+	// gs.laserY += gs.directionY
 
 	// draws red 🔴 laser
 	gc.SetFillColor(color.RGBA{0xff, 0x00, 0x00, 0xff})
 	gc.SetStrokeColor(color.RGBA{0xff, 0x00, 0x00, 0xff})
 
 	gc.BeginPath()
-	//gc.ArcTo(gs.laserX, gs.laserY, gs.laserSize, gs.laserSize, 0, math.Pi*2)
-	draw2dkit.Circle(gc, gs.laserX, gs.laserY, gs.laserSize)
+	x1, y1 := gs.dp.Pendulum1.Ball.GetLocation()
+	x2, y2 := gs.dp.Pendulum2.Ball.GetLocation()
+	//fmt.Println(x1, x2, y1, y2)
+	x1, y1 = shift(x1, y1, 2)
+	x2, y2 = shift(x2, y2, 2)
+
+	draw2dkit.Circle(gc, x1, y1, ballSize)
+	draw2dkit.Circle(gc, x2, y2, ballSize)
+	//draw2dkit.
+	//draw2dkit.Circle(gc, gs.laserX, gs.laserY, gs.laserSize)
 	gc.FillStroke()
 	gc.Close()
 
 	return true
+}
+
+func shift(x, y, max float64) (float64, float64) {
+	return ballSize + (width-ballSize*2)/2 + x*(width-ballSize*2)/(max*2),
+		ballSize + (height-ballSize*2)/2 + y*(height-ballSize*2)/(max*2)
 }
