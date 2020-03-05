@@ -56,8 +56,9 @@ func (dp *DoublePendulum) SetPotentialEnergy(val float64) {
 	dp.potentialOffset = val - pe
 }
 
-func (dp *DoublePendulum) evaluate() {
+func (dp *DoublePendulum) evaluate() []float64 {
 	var (
+		vals = make([]float64, 4)
 		th1  = dp.Pendulum1.theta
 		dth1 = dp.Pendulum1.thetaPrime
 		th2  = dp.Pendulum2.theta
@@ -69,19 +70,22 @@ func (dp *DoublePendulum) evaluate() {
 		g    = dp.gravity
 	)
 
+	vals[0] = dth1
 	num := -g * (2*m1 + m2) * math.Sin(th1)
 	num = num - g*m2*math.Sin(th1-2*th2)
 	num = num - 2*m2*dth2*dth2*L2*math.Sin(th1-th2)
 	num = num - m2*dth1*dth1*L1*math.Sin(2*(th1-th2))
 	num = num / (L1 * (2*m1 + m2 - m2*math.Cos(2*(th1-th2))))
-	dp.Pendulum1.Ball.acceleration = num
+	vals[1] = num
 
+	vals[2] = dth2
 	num = (m1 + m2) * dth1 * dth1 * L1
 	num = num + g*(m1+m2)*math.Cos(th1)
 	num = num + m2*dth2*dth2*L2*math.Cos(th1-th2)
 	num = num * 2 * math.Sin(th1-th2)
 	num = num / (L2 * (2*m1 + m2 - m2*math.Cos(2*(th1-th2))))
-	dp.Pendulum2.Ball.acceleration = num
+	vals[3] = num
+	return vals
 }
 
 func (dp *DoublePendulum) Modify() {
@@ -89,31 +93,16 @@ func (dp *DoublePendulum) Modify() {
 	theta1 := limitAngle(dp.Pendulum1.theta)
 	if theta1 != dp.Pendulum1.theta {
 		dp.Pendulum1.theta = theta1
-		//this.getVarsList().setValue(0, theta1, /*continuous=*/false);
-		//vars[0] = theta1;
 	}
 	theta2 := limitAngle(dp.Pendulum2.theta)
 	if theta2 != dp.Pendulum2.theta {
 		dp.Pendulum2.theta = theta2
-		//this.getVarsList().setValue(0, theta2, /*continuous=*/false);
-		//vars[0] = theta2;
 	}
-	// update the variables that track energy
-	//   0        1       2        3        4      5      6   7   8    9
-	// theta1, theta1', theta2, theta2', accel1, accel2, KE, PE, TE, time
-	dp.move()
-	dp.evaluate()
 
-	// t := .01
-	// dp.Pendulum1.theta += dp.Pendulum1.Ball.acceleration * t
-	// dp.Pendulum2.theta += dp.Pendulum2.Ball.acceleration * t
-	//dp.getEnergy()
-	//var ei = this.getEnergyInfo_(vars);
-	//   dp.
-	//   vars[6] = ei.getTranslational();
-	//   vars[7] = ei.getPotential();
-	//   vars[8] = ei.getTotalEnergy();
-	//   va.setValues(vars, /*continuous=*/true);
+	dp.move()
+	res := dp.evaluate()
+	dp.Pendulum1.Ball.acceleration = res[1]
+	dp.Pendulum2.Ball.acceleration = res[3]
 }
 
 func (dp *DoublePendulum) move() {
@@ -176,63 +165,27 @@ func limitAngle(angle float64) float64 {
 }
 
 // // RungeKutta
-// func (dp *DoublePendulum) Step(stepSize float64) {
-// 		// var error, i;
-// 		// var va = this.ode_.getVarsList();
-// 		// var vars = va.getValues();
-// 		// var N = vars.length;
-// 		// if (this.inp_.length < N) {
-// 		//   this.inp_ = /** @type {!Array<number>}*/(new Array(N));
-// 		//   this.k1_ = /** @type {!Array<number>}*/(new Array(N));
-// 		//   this.k2_ = /** @type {!Array<number>}*/(new Array(N));
-// 		//   this.k3_ = /** @type {!Array<number>}*/(new Array(N));
-// 		//   this.k4_ = /** @type {!Array<number>}*/(new Array(N));
-// 		// }
-// 		// var inp = this.inp_;
-// 		// var k1 = this.k1_;
-// 		// var k2 = this.k2_;
-// 		// var k3 = this.k3_;
-// 		// var k4 = this.k4_;
-// 		// evaluate at time t
-// 		// for (i=0; i<N; i++) {
-// 		//   inp[i] = vars[i];
-// 		// }
-// 		// Util.zeroArray(k1);
+func (dp *DoublePendulum) Step(stepSize float64) {
+	temp := *dp
 
-// 		error = this.ode_.evaluate(inp, k1, 0);
-// 		if (error !== null) {
-// 		  return error;
-// 		}
-// 		// evaluate at time t+stepSize/2
-// 		for (i=0; i<N; i++) {
-// 		  inp[i] = vars[i]+k1[i]*stepSize/2;
-// 		}
-// 		Util.zeroArray(k2);
-// 		error = this.ode_.evaluate(inp, k2, stepSize/2);
-// 		if (error !== null) {
-// 		  return error;
-// 		}
-// 		// evaluate at time t+stepSize/2
-// 		for (i=0; i<N; i++) {
-// 		  inp[i] = vars[i]+k2[i]*stepSize/2;
-// 		}
-// 		Util.zeroArray(k3);
-// 		error = this.ode_.evaluate(inp, k3, stepSize/2);
-// 		if (error !== null) {
-// 		  return error;
-// 		}
-// 		// evaluate at time t+stepSize
-// 		for (i=0; i<N; i++) {
-// 		  inp[i] = vars[i]+k3[i]*stepSize;
-// 		}
-// 		Util.zeroArray(k4);
-// 		error = this.ode_.evaluate(inp, k4, stepSize);
-// 		if (error !== null) {
-// 		  return error;
-// 		}
-// 		for (i=0; i<N; i++) {
-// 			vars[i] += (k1[i] + 2*k2[i] + 2*k3[i] + k4[i])*stepSize/6;
-// 		}
-// 		va.setValues(vars, /*continuous=*/true);
-// 		return null;
-// }
+	k1 := temp.evaluate()
+	temp.Pendulum1.theta = dp.Pendulum1.theta + k1[0]*stepSize/2
+	temp.Pendulum1.thetaPrime = dp.Pendulum1.thetaPrime + k1[1]*stepSize/2
+	temp.Pendulum2.theta = dp.Pendulum2.theta + k1[2]*stepSize/2
+	temp.Pendulum2.thetaPrime = dp.Pendulum2.thetaPrime + k1[3]*stepSize/2
+	k2 := temp.evaluate()
+	temp.Pendulum1.theta = dp.Pendulum1.theta + k2[0]*stepSize/2
+	temp.Pendulum1.thetaPrime = dp.Pendulum1.thetaPrime + k2[1]*stepSize/2
+	temp.Pendulum2.theta = dp.Pendulum2.theta + k2[2]*stepSize/2
+	temp.Pendulum2.thetaPrime = dp.Pendulum2.thetaPrime + k2[3]*stepSize/2
+	k3 := temp.evaluate()
+	temp.Pendulum1.theta = dp.Pendulum1.theta + k3[0]*stepSize
+	temp.Pendulum1.thetaPrime = dp.Pendulum1.thetaPrime + k3[1]*stepSize
+	temp.Pendulum2.theta = dp.Pendulum2.theta + k3[2]*stepSize
+	temp.Pendulum2.thetaPrime = dp.Pendulum2.thetaPrime + k3[3]*stepSize
+	k4 := temp.evaluate()
+	dp.Pendulum1.theta += (k1[0] + 2*k2[0] + 2*k3[0] + k4[0]) * stepSize / 6
+	dp.Pendulum1.thetaPrime += (k1[1] + 2*k2[1] + 2*k3[1] + k4[1]) * stepSize / 6
+	dp.Pendulum2.theta += (k1[2] + 2*k2[2] + 2*k3[2] + k4[2]) * stepSize / 6
+	dp.Pendulum2.thetaPrime += (k1[3] + 2*k2[3] + 2*k3[3] + k4[3]) * stepSize / 6
+}

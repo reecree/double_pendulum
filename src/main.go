@@ -39,11 +39,12 @@ var (
 )
 
 const ballSize = 20
+const stepSize = 0.0250
 
 var gs = gameState{}
 
 // This specifies how long a delay between calls to 'render'.     To get Frame Rate,   1s / renderDelay
-var renderDelay time.Duration = 30 * time.Millisecond
+var renderDelay time.Duration = 20 * time.Millisecond
 
 func main() {
 
@@ -93,6 +94,7 @@ func Render(gc *draw2dimg.GraphicContext) bool {
 	// move red laser
 
 	gs.dp.Modify()
+	gs.dp.Step(stepSize)
 	// gs.laserX += gs.directionX
 	// gs.laserY += gs.directionY
 
@@ -103,7 +105,7 @@ func Render(gc *draw2dimg.GraphicContext) bool {
 	gc.BeginPath()
 	x1, y1 := gs.dp.Pendulum1.Ball.GetLocation()
 	x2, y2 := gs.dp.Pendulum2.Ball.GetLocation()
-	//fmt.Println(x1, x2, y1, y2)
+	//fmt.Println(x1, y1, x2, y2)
 	x1, y1 = shift(x1, y1, 2)
 	x2, y2 = shift(x2, y2, 2)
 
