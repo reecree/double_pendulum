@@ -38,8 +38,8 @@ var (
 	height float64
 )
 
-const ballSize = 20
-const stepSize = 0.0250
+const ballSize = 2
+const stepSize = 0.00250
 
 var gs = gameState{}
 
@@ -62,16 +62,7 @@ func main() {
 	width = float64(cvs.Width())
 
 	cvs.Start(60, Render)
-
-	//go doEvery(renderDelay, Render) // Kick off the Render function as go routine as it never returns
 	<-done
-}
-
-// Helper function which calls the required func (in this case 'render') every time.Duration,  Call as a go-routine to prevent blocking, as this never returns
-func doEvery(d time.Duration, f func(time.Time)) {
-	for x := range time.Tick(d) {
-		f(x)
-	}
 }
 
 // Render is called from the 'requestAnnimationFrame' function.
@@ -93,8 +84,9 @@ func Render(gc *draw2dimg.GraphicContext) bool {
 	gc.Clear()
 	// move red laser
 
-	gs.dp.Modify()
 	gs.dp.Step(stepSize)
+	gs.dp.Modify()
+
 	// gs.laserX += gs.directionX
 	// gs.laserY += gs.directionY
 
@@ -105,21 +97,25 @@ func Render(gc *draw2dimg.GraphicContext) bool {
 	gc.BeginPath()
 	x1, y1 := gs.dp.Pendulum1.Ball.GetLocation()
 	x2, y2 := gs.dp.Pendulum2.Ball.GetLocation()
-	//fmt.Println(x1, y1, x2, y2)
-	x1, y1 = shift(x1, y1, 2)
-	x2, y2 = shift(x2, y2, 2)
+	x1, y1 = shift(x1, -y1, 6)
+	x2, y2 = shift(x2, -y2, 6)
+
+	z1, z2 := shift(0, 0, 6)
 
 	draw2dkit.Circle(gc, x1, y1, ballSize)
 	draw2dkit.Circle(gc, x2, y2, ballSize)
-	//draw2dkit.
-	//draw2dkit.Circle(gc, gs.laserX, gs.laserY, gs.laserSize)
+	draw2dkit.Circle(gc, z1, z2, 5)
+
 	gc.FillStroke()
 	gc.Close()
 
 	return true
 }
 
+// func shift(x, y, max float64) (float64, float64) {
+// 	return ballSize + (width-ballSize*2)/2 + x*(width-ballSize*2)/(max*2),
+// 		ballSize + (height-ballSize*2)/2 + y*(height-ballSize*2)/(max*2)
+// }
 func shift(x, y, max float64) (float64, float64) {
-	return ballSize + (width-ballSize*2)/2 + x*(width-ballSize*2)/(max*2),
-		ballSize + (height-ballSize*2)/2 + y*(height-ballSize*2)/(max*2)
+	return width/2 + x*width/max, height/2 + y*height/max
 }
